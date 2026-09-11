@@ -1,6 +1,6 @@
-# 🌾 The Farmer Was Replaced 常用函數與語法速查表 (Cheat Sheet)
+# 🌾 The Farmer Was Replaced 官方精確速查手冊 (Cheat Sheet)
 
-這份文件整理了目前已解鎖（與常用）的遊戲內建函數、常數與語法，供你隨時查閱。
+> 💡 本文件已核對遊戲本體繁體中文官方文本（`StreamingAssets/Languages/TW/docs`）與 `__builtins__.py`，所有名稱保證 100% 精準。
 
 ---
 
@@ -10,22 +10,22 @@
 | :--- | :--- | :--- |
 | `move(direction)` | 讓無人機往指定方向移動 1 格。地圖邊界具備環形連通 (Wrap around) 特性。 | `move(North)` |
 | `can_move(direction)` | 檢查該方向是否能移動，回傳 `True` 或 `False`。 | `if can_move(East): move(East)` |
-| `get_pos_x()` | 取得目前無人機的 **X 座標**（水平橫向，最左為 `0`，向東遞增）。 | `x = get_pos_x()` |
-| `get_pos_y()` | 取得目前無人機的 **Y 座標**（垂直縱向，最底為 `0`，向北遞增）。 | `y = get_pos_y()` |
+| `get_pos_x()` | 取得目前無人機的 **X 座標**（最左為 `0`，向東遞增）。 | `if get_pos_x() == 0:` |
+| `get_pos_y()` | 取得目前無人機的 **Y 座標**（最底為 `0`，向北遞增）。 | `if get_pos_y() == 0:` |
 | `get_world_size()` | 取得農場目前邊長（例如 3×3 時回傳 `3`）。 | `for i in range(get_world_size()):` |
 
-> **方向常數**：`North`（北/上）、`South`（南/下）、`East`（東/右）、`West`（西/左）
+> **方向常數**：`North`（北）、`South`（南）、`East`（東）、`West`（西）
 
 ---
 
-## 🚜 2. 農作與地形 (Crops & Grounds)
+## 🚜 2. 農作與翻土 (Crops & Grounds)
 
 | 函數 | 說明 | 注意事項與範例 |
 | :--- | :--- | :--- |
 | `can_harvest()` | 檢查腳下作物是否**成熟可採收**。回傳 `True` 或 `False`。 | `if can_harvest(): harvest()` |
-| `harvest()` | 採收腳下的作物。若未成熟採收會將其清除。 | `harvest()` |
-| `plant(entity)` | 在腳下種植指定的植物。 | `plant(Entities.Bush)`<br>`plant(Entities.Carrots)` |
-| `till()` | **翻土切換**：草地變成土壤；土壤變回草地。 | ⚠️ **具開關特性**，若非必要勿重複執行！ |
+| `harvest()` | 採收腳下的作物。若作物尚未成熟就採收會將其銷毀。 | `harvest()` |
+| `plant(entity)` | 在腳下種植指定的植物。**會自動消耗背包內的成本資源**！ | `plant(Entities.Bush)`<br>`plant(Entities.Carrot)` |
+| `till()` | **翻土開關**：草地變土壤；土壤變回草地。 | ⚠️ 請先檢查地貌，避免重複翻土切回草地！ |
 | `clear()` | 清空農場所有物件，將無人機重置回 `(0, 0)`。 | `clear()` |
 
 ---
@@ -34,71 +34,44 @@
 
 | 函數 | 說明 | 常用比對範例 |
 | :--- | :--- | :--- |
-| `get_entity_type()` | 取得腳下的作物或物件類型。若沒有東西回傳 `None`。 | `if get_entity_type() == Entities.Bush:`<br>`if get_entity_type() == None:` |
-| `get_ground_type()` | 取得腳下的地面類型。 | `if get_ground_type() != Grounds.Soil:`<br>&nbsp;&nbsp;&nbsp;&nbsp;`till()`（確保翻成土壤） |
+| `get_entity_type()` | 取得腳下的作物。若空地則回傳 `None`。 | `if get_entity_type() == None:`<br>`if get_entity_type() == Entities.Bush:` |
+| `get_ground_type()` | 取得腳下的地面類型。 | `if get_ground_type() != Grounds.Soil:`<br>&nbsp;&nbsp;&nbsp;&nbsp;`till()` |
 | `num_items(item)` | 查詢目前背包中某個物品的**庫存數量**。 | `if num_items(Items.Hay) >= 1000:` |
+| `num_unlocked(unlock)` | 查詢某項目是否已解鎖或升級等級。 | `if num_unlocked(Unlocks.Carrots) > 0:` |
 
 ---
 
-## 💰 4. 交易系統 (Trade & Store)
+## 🏷️ 4. 正確的 Enum 常數對照表（嚴格區分大小寫與單複數）
 
-| 函數 | 說明 | 範例 |
+### ⚠️ 重點口訣：
+1. **分類名稱一律是「複數」**：`Entities`、`Items`、`Grounds`、`Unlocks`（千萬不要寫成 `Item.` 或 `Entity.`）
+2. **植物名稱是「單數」**：`Entities.Carrot`（沒有加 s！）
+
+| 分類 | 常數項目 | 說明 |
 | :--- | :--- | :--- |
-| `trade(item)` | 購買指定物品（例如種子）。成功回傳 `True`。 | `trade(Items.Carrot_Seed)` |
-| `can_trade(item)` | 檢查目前的資源是否足夠購買指定物品。 | `if can_trade(Items.Carrot_Seed):` |
+| **植物 (Entities)** | `Entities.Grass`<br>`Entities.Bush`<br>`Entities.Carrot` | 草（自動生長）<br>灌木（產木材，消耗木材種植）<br>胡蘿蔔（產胡蘿蔔，**種植直接消耗木材與乾草，不需買種子**） |
+| **物品 (Items)** | `Items.Hay`<br>`Items.Wood`<br>`Items.Carrot` | 乾草（割草取得）<br>木材（收割灌木取得）<br>胡蘿蔔（收割胡蘿蔔取得） |
+| **地面 (Grounds)** | `Grounds.Grassland`<br>`Grounds.Soil` | 天然草地（會自動長草）<br>耕作土壤（胡蘿蔔唯一能生長的地質） |
 
 ---
 
-## 🏷️ 5. 常用枚舉常數清單 (Enums)
+## 🥕 5. 官方官方說明：胡蘿蔔正確種植邏輯
 
-### 🌱 植物 (Entities)
-- `Entities.Grass`（草）
-- `Entities.Bush`（灌木，產木頭）
-- `Entities.Carrots`（胡蘿蔔）
+> **官方原文節錄**：
+> 「在用 `plant(Entities.Carrot)` 種植胡蘿蔔之前，你需要先耕地。這會將地塊變更為 `Grounds.Soil`，只要呼叫 `till()`。再次呼叫 `till()` 則會將地塊變回 `Grounds.Grassland`。  
+> 種植胡蘿蔔需要木材和乾草。呼叫 `plant(Entities.Carrot)` 時會自動移除這些物品。」
 
-### 🪵 物品與種子 (Items)
-- `Items.Hay`（乾草）
-- `Items.Wood`（木頭）
-- `Items.Carrot`（胡蘿蔔）
-- `Items.Carrot_Seed`（胡蘿蔔種子）
+### 實戰正確範例：
 
-### 🏞️ 地面類型 (Grounds)
-- `Grounds.Grassland`（天然草地）
-- `Grounds.Soil`（耕作土壤）
-
----
-
-## 🛠️ 6. 偵錯與日常 (Debug & Utilities)
-
-| 函數 | 說明 | 範例 |
-| :--- | :--- | :--- |
-| `print(...)` | 在遊戲左下角除錯視窗印出訊息或數值。 | `print("X坐標:", get_pos_x())` |
-| `do_a_flip()` | 讓無人機轉一圈空翻。 | `do_a_flip()` |
-| `pet_the_piggy()` | 摸摸農場小豬。 | `pet_the_piggy()` |
-
----
-
-## 💡 常見邏輯組合小技巧
-
-### 1. 安全翻土（只在不是土壤時才翻土）
 ```python
+# 1. 如果可以收割就收割
+if can_harvest():
+    harvest()
+
+# 2. 如果要種胡蘿蔔，先確保地面是土壤（不是土壤才翻土）
 if get_ground_type() != Grounds.Soil:
     till()
-```
 
-### 2. 左側整列判斷（3×3 農田的最左欄）
-```python
-if get_pos_x() == 0:
-    # 這裡是左側那一列
-    pass
-else:
-    # 這裡是右側兩列
-    pass
-```
-
-### 3. 種胡蘿蔔前自動補種子
-```python
-if num_items(Items.Carrot_Seed) == 0:
-    trade(Items.Carrot_Seed)
-plant(Entities.Carrots)
+# 3. 只要地面是土壤且目前是空地，直接種植（遊戲會自動扣除乾草與木材）
+plant(Entities.Carrot)
 ```
