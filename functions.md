@@ -24,13 +24,22 @@
 | :--- | :--- | :--- |
 | `can_harvest()` | 檢查腳下作物是否**成熟可採收**。回傳 `True` 或 `False`。 | `if can_harvest(): harvest()` |
 | `harvest()` | 採收腳下的作物。若作物尚未成熟就採收會將其銷毀。 | `harvest()` |
-| `plant(entity)` | 在腳下種植指定的植物。**會自動消耗背包內的成本資源**！ | `plant(Entities.Bush)`<br>`plant(Entities.Carrot)` |
+| `plant(entity)` | 在腳下種植指定的植物。**會自動消耗背包內的成本資源**！ | `plant(Entities.Bush)`<br>`plant(Entities.Carrot)`<br>`plant(Entities.Tree)` |
 | `till()` | **翻土開關**：草地變土壤；土壤變回草地。 | ⚠️ 請先檢查地貌，避免重複翻土切回草地！ |
 | `clear()` | 清空農場所有物件，將無人機重置回 `(0, 0)`。 | `clear()` |
 
 ---
 
-## 👁️ 3. 感知系統 (Senses)
+## 💧 3. 澆水系統 (Watering System)
+
+| 函數 | 說明 | 範例 |
+| :--- | :--- | :--- |
+| `get_water()` | 取得腳下地塊的含水量（範圍 `0.0` ～ `1.0`）。含水量愈高生長愈快（最高 5 倍速）。 | `if get_water() < 0.5:` |
+| `use_item(Items.Water)` | 對腳下地塊澆一桶水（增加 `0.25` 含水量）。每 10 秒自動補充一桶水。 | `if get_water() < 0.75: use_item(Items.Water)` |
+
+---
+
+## 👁️ 4. 感知系統 (Senses)
 
 | 函數 | 說明 | 常用比對範例 |
 | :--- | :--- | :--- |
@@ -41,37 +50,24 @@
 
 ---
 
-## 🏷️ 4. 正確的 Enum 常數對照表（嚴格區分大小寫與單複數）
+## 🏷️ 5. 正確的 Enum 常數對照表（嚴格區分大小寫與單複數）
 
 ### ⚠️ 重點口訣：
 1. **分類名稱一律是「複數」**：`Entities`、`Items`、`Grounds`、`Unlocks`（千萬不要寫成 `Item.` 或 `Entity.`）
-2. **植物名稱是「單數」**：`Entities.Carrot`（沒有加 s！）
+2. **植物名稱是「單數」**：`Entities.Carrot`、`Entities.Tree`
 
 | 分類 | 常數項目 | 說明 |
 | :--- | :--- | :--- |
-| **植物 (Entities)** | `Entities.Grass`<br>`Entities.Bush`<br>`Entities.Carrot` | 草（自動生長）<br>灌木（產木材，消耗木材種植）<br>胡蘿蔔（產胡蘿蔔，**種植直接消耗木材與乾草，不需買種子**） |
-| **物品 (Items)** | `Items.Hay`<br>`Items.Wood`<br>`Items.Carrot` | 乾草（割草取得）<br>木材（收割灌木取得）<br>胡蘿蔔（收割胡蘿蔔取得） |
+| **植物 (Entities)** | `Entities.Grass`<br>`Entities.Bush`<br>`Entities.Carrot`<br>`Entities.Tree` | 草（自動生長）<br>灌木（產木材，消耗木材種植）<br>胡蘿蔔（產胡蘿蔔，消耗木材與乾草）<br>樹木（產 5 木材，**相鄰種植會生長減速**） |
+| **物品 (Items)** | `Items.Hay`<br>`Items.Wood`<br>`Items.Carrot`<br>`Items.Water` | 乾草（割草取得）<br>木材（收割灌木/樹木取得）<br>胡蘿蔔（收割胡蘿蔔取得）<br>水（系統每 10 秒自動補給） |
 | **地面 (Grounds)** | `Grounds.Grassland`<br>`Grounds.Soil` | 天然草地（會自動長草）<br>耕作土壤（胡蘿蔔唯一能生長的地質） |
 
 ---
 
-## 🥕 5. 官方官方說明：胡蘿蔔正確種植邏輯
+## 🌲 6. 樹木種植特性與棋盤格規則
 
 > **官方原文節錄**：
-> 「在用 `plant(Entities.Carrot)` 種植胡蘿蔔之前，你需要先耕地。這會將地塊變更為 `Grounds.Soil`，只要呼叫 `till()`。再次呼叫 `till()` 則會將地塊變回 `Grounds.Grassland`。  
-> 種植胡蘿蔔需要木材和乾草。呼叫 `plant(Entities.Carrot)` 時會自動移除這些物品。」
+> 「樹木比灌木更適合取得木材。每棵樹木會提供 5 個木材。  
+> 樹木喜歡保留一些空間，如果將樹木相鄰種植會減慢它們的生長速度。位於其東、南、西或北方相鄰格子的每一棵樹木，生長時間都會加倍。」
 
-### 實戰正確範例：
-
-```python
-# 1. 如果可以收割就收割
-if can_harvest():
-    harvest()
-
-# 2. 如果要種胡蘿蔔，先確保地面是土壤（不是土壤才翻土）
-if get_ground_type() != Grounds.Soil:
-    till()
-
-# 3. 只要地面是土壤且目前是空地，直接種植（遊戲會自動扣除乾草與木材）
-plant(Entities.Carrot)
-```
+👉 **最佳實踐**：利用座標奇偶數相加 `(get_pos_x() + get_pos_y()) % 2 == 0` 種植成**西洋棋盤格（Checkerboard）**，避免任何兩棵樹上下左右相鄰！
