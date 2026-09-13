@@ -24,7 +24,7 @@
 | :--- | :--- | :--- |
 | `can_harvest()` | 檢查腳下作物是否**成熟可採收**。回傳 `True` 或 `False`。 | `if can_harvest(): harvest()` |
 | `harvest()` | 採收腳下的作物。若作物尚未成熟就採收會將其銷毀。 | `harvest()` |
-| `plant(entity)` | 在腳下種植指定的植物。**會自動消耗背包內的成本資源**！ | `plant(Entities.Bush)`<br>`plant(Entities.Carrot)`<br>`plant(Entities.Tree)` |
+| `plant(entity)` | 在腳下種植指定的植物。**會自動消耗背包內的成本資源**！ | `plant(Entities.Bush)`<br>`plant(Entities.Carrot)`<br>`plant(Entities.Pumpkin)` |
 | `till()` | **翻土開關**：草地變土壤；土壤變回草地。 | ⚠️ 請先檢查地貌，避免重複翻土切回草地！ |
 | `clear()` | 清空農場所有物件，將無人機重置回 `(0, 0)`。 | `clear()` |
 
@@ -43,7 +43,7 @@
 
 | 函數 | 說明 | 常用比對範例 |
 | :--- | :--- | :--- |
-| `get_entity_type()` | 取得腳下的作物。若空地則回傳 `None`。 | `if get_entity_type() == None:`<br>`if get_entity_type() == Entities.Bush:` |
+| `get_entity_type()` | 取得腳下的作物。若空地則回傳 `None`。 | `if get_entity_type() == None:`<br>`if get_entity_type() == Entities.Dead_Pumpkin:` |
 | `get_ground_type()` | 取得腳下的地面類型。 | `if get_ground_type() != Grounds.Soil:`<br>&nbsp;&nbsp;&nbsp;&nbsp;`till()` |
 | `num_items(item)` | 查詢目前背包中某個物品的**庫存數量**。 | `if num_items(Items.Hay) >= 1000:` |
 | `num_unlocked(unlock)` | 查詢某項目是否已解鎖或升級等級。 | `if num_unlocked(Unlocks.Carrots) > 0:` |
@@ -54,20 +54,24 @@
 
 ### ⚠️ 重點口訣：
 1. **分類名稱一律是「複數」**：`Entities`、`Items`、`Grounds`、`Unlocks`（千萬不要寫成 `Item.` 或 `Entity.`）
-2. **植物名稱是「單數」**：`Entities.Carrot`、`Entities.Tree`
+2. **植物名稱是「單數」**：`Entities.Carrot`、`Entities.Pumpkin`
 
 | 分類 | 常數項目 | 說明 |
 | :--- | :--- | :--- |
-| **植物 (Entities)** | `Entities.Grass`<br>`Entities.Bush`<br>`Entities.Carrot`<br>`Entities.Tree` | 草（自動生長）<br>灌木（產木材，消耗木材種植）<br>胡蘿蔔（產胡蘿蔔，消耗木材與乾草）<br>樹木（產 5 木材，**相鄰種植會生長減速**） |
-| **物品 (Items)** | `Items.Hay`<br>`Items.Wood`<br>`Items.Carrot`<br>`Items.Water` | 乾草（割草取得）<br>木材（收割灌木/樹木取得）<br>胡蘿蔔（收割胡蘿蔔取得）<br>水（系統每 10 秒自動補給） |
-| **地面 (Grounds)** | `Grounds.Grassland`<br>`Grounds.Soil` | 天然草地（會自動長草）<br>耕作土壤（胡蘿蔔唯一能生長的地質） |
+| **植物 (Entities)** | `Entities.Grass`<br>`Entities.Bush`<br>`Entities.Carrot`<br>`Entities.Tree`<br>`Entities.Pumpkin`<br>`Entities.Dead_Pumpkin` | 草（自動生長）<br>灌木（產木材，消耗木材種植）<br>胡蘿蔔（產胡蘿蔔，消耗木材與乾草）<br>樹木（產 5 木材，**相鄰種植會生長減速**）<br>南瓜（**消耗胡蘿蔔種植**，需在土壤上）<br>枯萎南瓜（死亡的南瓜，需重新補種） |
+| **物品 (Items)** | `Items.Hay`<br>`Items.Wood`<br>`Items.Carrot`<br>`Items.Pumpkin`<br>`Items.Water` | 乾草、木材、胡蘿蔔、南瓜、水 |
+| **地面 (Grounds)** | `Grounds.Grassland`<br>`Grounds.Soil` | 天然草地<br>耕作土壤（胡蘿蔔與南瓜必須種在土壤上） |
 
 ---
 
-## 🌲 6. 樹木種植特性與棋盤格規則
+## 🎃 6. 南瓜種植特性與規則
 
 > **官方原文節錄**：
-> 「樹木比灌木更適合取得木材。每棵樹木會提供 5 個木材。  
-> 樹木喜歡保留一些空間，如果將樹木相鄰種植會減慢它們的生長速度。位於其東、南、西或北方相鄰格子的每一棵樹木，生長時間都會加倍。」
+> 「南瓜在耕作的土壤上像胡蘿蔔一樣生長。**種植它們需要消耗胡蘿蔔**。  
+> 當一個方形區域內的所有南瓜都完全成熟時，它們會合併為一個巨型南瓜。不幸的是，南瓜在完全成熟後有 **20% 的機率會死亡**。  
+> 南瓜死亡時會留下枯萎南瓜 (`Entities.Dead_Pumpkin`)。在其位置種植新植物會自動移除枯死的南瓜，因此不需要特別採收。`can_harvest()` 在枯萎南瓜上永遠回傳 `False`。」
 
-👉 **最佳實踐**：利用座標奇偶數相加 `(get_pos_x() + get_pos_y()) % 2 == 0` 種植成**西洋棋盤格（Checkerboard）**，避免任何兩棵樹上下左右相鄰！
+👉 **先求有的極簡策略**：
+1. 和胡蘿蔔一樣，只能種在土壤上（`Grounds.Soil`）。
+2. 種植呼叫 `plant(Entities.Pumpkin)`，會自動扣除胡蘿蔔。
+3. 如果看到腳下是枯萎南瓜（`get_entity_type() == Entities.Dead_Pumpkin`），直接對它呼叫 `plant(Entities.Pumpkin)` 就能原地補種！
